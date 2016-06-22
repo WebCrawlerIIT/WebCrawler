@@ -4,7 +4,7 @@
  * From an input html file, it should return a list of all the links in said file,
  * and all the text in human readable format.
  * This class uses the JSoup library (jar included) to extract tags.
- * @author Mateus Lopes
+ * @author Mateus Lopes, Michael Sampietro
  *
  */
 
@@ -37,16 +37,24 @@ public class HTMLParser {
 		
 		Document doc = Jsoup.parse(input, "utf-8", "www.test.com");	// parses a page that's been downloaded
 		//Document connect = Jsoup.connect("http://www.ccel.org/ccel/bible/kjv.txt").get(); // download and then parses a page
+		String url = "http://cnn.com";
+		Document cnn = Jsoup.connect(url).get(); 
 		
 		// Extracts all the anchor tags that contain an href argument
 		Elements links = doc.select("a[href]");
+		Elements cnnLinks = cnn.select("a[href]");
 		
 		// Selects all the text in the HTML, both on the head and body tags
 		String text = doc.body().text();
-		
+		String cnnText = cnn.body().text();
+				
 		// Prints the tokens from the page to an output file, and the links found to another file
 		printToFile(text, "test.com");
 		printLinksToFile(links, "test.com");
+		
+		// Test only: cnn
+		printToFile(cnnText, "cnn.com");
+		printLinksToFile(cnnLinks, "cnn.com");
 	}
 	
 	/**
@@ -89,7 +97,10 @@ public class HTMLParser {
 			
 			for(Element link : links) {
 				//output.println(link.text()); 	// prints what's written between the anchor tags
-				output.println(link.attr("href"));
+				
+				String url = completeLink(link, websiteURL);
+				if(!url.isEmpty())
+					output.println(url);
 			}
 			
 			output.flush();
@@ -101,4 +112,20 @@ public class HTMLParser {
 		System.out.println("Done printing links!");
 	}
 	
+	/** 
+	 * This method completes an URL, so instead of adding a relative URL to the links file,
+	 * it adds the absolute URL, such as: websiteURL.com/us
+	 * @return a complete URL string
+	 */
+	private String completeLink(Element relativeURL, String websiteURL) {
+		
+		if(relativeURL.attr("href").startsWith("/")) {
+			String finalLink = "";
+			finalLink = websiteURL + relativeURL.attr("href");
+			
+			return finalLink;
+		}
+		
+		return relativeURL.attr("href");
+	}
 }
