@@ -26,7 +26,7 @@ public class Webpage {
 		setTokensFile(url);
 		setLinksFile(url);
 	}
-	
+		
 	// Getters and Setters for the attributes
 	public String getURL() {
 		return URL;

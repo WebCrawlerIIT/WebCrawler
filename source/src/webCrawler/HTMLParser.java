@@ -4,13 +4,12 @@
  * From an input html file, it should return a list of all the links in said file,
  * and all the text in human readable format.
  * This class uses the JSoup library (jar included) to extract tags.
- * @author Mateus Lopes, Michael Sampietro
+ * @author Mateus Lopes Teixeira, Michael Sampietro
  *
  */
 
 package webCrawler;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,38 +22,32 @@ import org.jsoup.select.Elements;
 public class HTMLParser {
 		
 	public HTMLParser() {
-		try {
-			removeHtmlTagsTEST();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Instantiated an HTML parser!");
 	}
 	
 	// This is a test class to test removing html tags 
 	// and how to work with them in JSoup
-	private void removeHtmlTagsTEST() throws IOException {
-		File input = new File("./src/webCrawler/test.html");	// opens an HTML page already stored
+	public void downloadAndParsePage(Webpage page) throws IOException {
 		
-		Document doc = Jsoup.parse(input, "utf-8", "www.test.com");	// parses a page that's been downloaded
-		//Document connect = Jsoup.connect("http://www.ccel.org/ccel/bible/kjv.txt").get(); // download and then parses a page
-		String url = "http://cnn.com";
-		Document cnn = Jsoup.connect(url).get(); 
+		/*
+		 * HOW TO OPEN A WEBPAGE THAT HAS BEEN DOWNLOADED, USING JSOUP
+		 * File input = new File("./src/webCrawler/test.html");	// opens an HTML page already stored
+		Document doc = Jsoup.parse(input, "utf-8", "www.test.com");	// parses a page that's been downloaded		
+		*/
 		
-		// Extracts all the anchor tags that contain an href argument
-		Elements links = doc.select("a[href]");
-		Elements cnnLinks = cnn.select("a[href]");
-		
-		// Selects all the text in the HTML, both on the head and body tags
-		String text = doc.body().text();
-		String cnnText = cnn.body().text();
-				
-		// Prints the tokens from the page to an output file, and the links found to another file
-		printToFile(text, "test.com");
-		printLinksToFile(links, "test.com");
-		
-		// Test only: cnn
-		printToFile(cnnText, "cnn.com");
-		printLinksToFile(cnnLinks, "cnn.com");
+		if(page.getURL().startsWith("http://") || page.getURL().startsWith("https://")) {
+			Document connect = Jsoup.connect(page.getURL()).get();
+			
+			// Extracts all the anchor tags that contain an href argument
+			Elements links = connect.select("a[href]");
+			
+			// Selects all the text in the HTML, both on the head and body tags
+			String pageText = connect.body().text();
+					
+			// Prints the tokens from the page to an output file, and the links found to another file
+			printTokensToFile(pageText, page.getTokensFile());
+			printLinksToFile(links, page);
+		}
 	}
 	
 	/**
@@ -63,10 +56,11 @@ public class HTMLParser {
 	 * @param text: a string containing all the tokens
 	 * @param websiteURL: the URL of the page, used for naming the file
 	 */
-	private void printToFile(String text, String websiteURL) {
-		String filename = websiteURL + ".txt";
-		
-		System.out.println("Printing tokens to " + filename + "...");
+	private void printTokensToFile(String text, String tokensFilename) {
+		// TODO: there has to be a better way to remove "http://" from the string...
+		// TODO: also do this to printLinksToFile();
+		String filename = tokensFilename.substring(7);
+
 		try {
 			PrintWriter output = new PrintWriter(filename);
 			String[] splitted = text.split("\\s+");	// Splits the token string to a list of tokens
@@ -88,19 +82,21 @@ public class HTMLParser {
 	 * @param links: a list of Elements type containing all the links, each is an Element
 	 * @param websiteURL: the URL of the page
 	 */
-	private void printLinksToFile(Elements links, String websiteURL) {
-		String filename = websiteURL + "_links.txt";
+	private void printLinksToFile(Elements links, Webpage page) {
+		String filename = page.getLinksFile().substring(7);
+
+		// TODO: what's the best way to close the output stream? in the finally?
+		//PrintWriter output = null;
 		
-		System.out.println("Printing links to " + filename + "...");
 		try {
 			PrintWriter output = new PrintWriter(filename);
 			
-			for(Element link : links) {
-				//output.println(link.text()); 	// prints what's written between the anchor tags
-				
-				String url = completeLink(link, websiteURL);
+			for(Element link : links) {					
+				//String url = completeLink(link, page.getURL());
+				String url = validateLink(link);
 				if(!url.isEmpty())
-					output.println(url);
+				//System.out.println(link.attr("href").toString());
+					output.println(link.attr("href").toString());
 			}
 			
 			output.flush();
@@ -108,24 +104,22 @@ public class HTMLParser {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			e.getLocalizedMessage();
-		}
+		} /*finally {
+			output.flush();
+			output.close();
+		} */
+		
 		System.out.println("Done printing links!");
 	}
 	
-	/** 
-	 * This method completes an URL, so instead of adding a relative URL to the links file,
-	 * it adds the absolute URL, such as: websiteURL.com/us
-	 * @return a complete URL string
-	 */
-	private String completeLink(Element relativeURL, String websiteURL) {
+	private String validateLink(Element link) {
+		String finalLink = "";
 		
-		if(relativeURL.attr("href").startsWith("/")) {
-			String finalLink = "";
-			finalLink = websiteURL + relativeURL.attr("href");
-			
-			return finalLink;
+		if((link.attr("href").startsWith("http://"))) {
+			return link.attr("href").toString();
 		}
 		
-		return relativeURL.attr("href");
+		return finalLink;
 	}
+	
 }
