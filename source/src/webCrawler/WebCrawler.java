@@ -1,6 +1,7 @@
 package webCrawler;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,6 +31,8 @@ public class WebCrawler {
 		
 		String query = imageCrawler.getSearchQuery();
 		imageCrawler.getJSONfromQuery(query);
+	
+		boolean resultsDirectory = new File("results").mkdir();
 				
 		try {
 			importSeedsFromFile(seeds);

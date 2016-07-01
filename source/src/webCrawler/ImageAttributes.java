@@ -7,10 +7,18 @@ package webCrawler;
  *
  */
 public class ImageAttributes {
+	
+	private String searchTerms = "";
 	private String link = "";
 	private String snippet = "";
 	private String contextLink = "";
 	
+	public String getSearchTerms() {
+		return searchTerms;
+	}
+	public void setSearchTerms(String searchTerms) {
+		this.searchTerms = searchTerms;
+	}
 	public String getLink() {
 		return link;
 	}
